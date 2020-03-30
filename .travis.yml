@@ -1,0 +1,22 @@
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  - docker build -t mnimik/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true mnimik/react-test npm test
+
+after_success:
+  - docker build -t mnimik/multi-client ./client
+  - docker build -t mnimik/multi-nginx ./nginx
+  - docker build -t mnimik/multi-server ./server
+  - docker build -t mnimik/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  - docker push mnimik/multi-client
+  - docker push mnimik/multi-server
+  - docker push mnimik/multi-nginx
+  - docker push mnimik/multi-worker
